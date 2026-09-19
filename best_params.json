@@ -1,7 +1,16 @@
 {
-  "model": "RandomForest",
+  "selected": "RandomForest",
   "params": {
-    "clf__max_depth": 6,
-    "clf__min_samples_split": 2
+    "LogisticRegression": {
+      "clf__C": 1.0
+    },
+    "RandomForest": {
+      "clf__max_depth": 6,
+      "clf__min_samples_split": 2
+    },
+    "HistGradientBoosting": {
+      "clf__learning_rate": 0.05,
+      "clf__max_leaf_nodes": 15
+    }
   }
 }

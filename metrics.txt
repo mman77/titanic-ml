@@ -2,10 +2,21 @@ Titanic final report (selection by repeated CV on train only)
 seed=42 test_size=0.2 cv=RepeatedStratifiedKFold(5x3) scoring=roc_auc
 sklearn=1.9.1 pandas=3.0.5
 features: ['pclass', 'sex', 'age', 'sibsp', 'parch', 'fare', 'embarked', 'family_size', 'alone', 'age_missing', 'is_child', 'fare_per_person', 'age_x_pclass']
-Dummy(most_frequent): test_acc=0.6145 | test_AUC=0.5000
-SexRule: test_acc=0.7765 | test_AUC=0.7534
-LogisticRegression: CV-AUC=0.8547 +/- 0.0243
-RandomForest: CV-AUC=0.8791 +/- 0.0264
-HistGradientBoosting: CV-AUC=0.8638 +/- 0.0351
+tuned params (06): {'LogisticRegression': {'clf__C': 1.0}, 'RandomForest': {'clf__max_depth': 6, 'clf__min_samples_split': 2}, 'HistGradientBoosting': {'clf__learning_rate': 0.05, 'clf__max_leaf_nodes': 15}}
 
-Winner: RandomForest CV-AUC=0.8791 | test_acc=0.7821 | test_AUC=0.8436
+Dummy(most_frequent): CV-AUC=0.5000 +/- 0.0000 | CV-acc=0.6166 +/- 0.0027
+SexRule: CV-AUC=0.7703 +/- 0.0273 | CV-acc=0.7893 +/- 0.0227
+LogisticRegression: CV-AUC=0.8547 +/- 0.0243 | CV-acc=0.8080 +/- 0.0289
+RandomForest: CV-AUC=0.8791 +/- 0.0264 | CV-acc=0.8240 +/- 0.0242
+HistGradientBoosting: CV-AUC=0.8709 +/- 0.0320 | CV-acc=0.8286 +/- 0.0332
+
+Paired (same folds):
+RandomForest - Dummy(most_frequent): mean dAUC=+0.3791 | better in 15/15 folds
+RandomForest - SexRule: mean dAUC=+0.1088 | better in 15/15 folds
+RandomForest - LogisticRegression: mean dAUC=+0.0244 | better in 15/15 folds
+RandomForest - HistGradientBoosting: mean dAUC=+0.0082 | better in 11/15 folds
+
+Winner (by CV-AUC among models): RandomForest
+Holdout, single look (n=179):
+RandomForest: test_acc=0.7821 (140/179) | test_AUC=0.8436
+SexRule: test_acc=0.7765 (139/179) | test_AUC=0.7534

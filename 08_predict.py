@@ -4,21 +4,16 @@ Engineered features are derived via common.add_features (same code as
 training -> no train/serve skew). `alone` is derived, not asked.
 Inputs are validated: invalid sex/embarked fail loudly instead of
 silently predicting garbage (handle_unknown='ignore' would zero them).
+age=None is allowed (the pipeline imputes it and sets age_missing=1).
 """
-import joblib
+import numpy as np
 import pandas as pd
-import sklearn
 
-from common import MODEL_PATH, RAW, add_features
+from common import RAW, add_features, load_model
 
-saved = joblib.load(MODEL_PATH)
+saved = load_model()
 model = saved["model"]
 features = saved["features"]
-
-saved_ver = saved.get("sklearn_version", "unknown")
-if saved_ver != sklearn.__version__:
-    print(f"WARNING: model saved with sklearn {saved_ver}, "
-          f"running {sklearn.__version__} -> re-run 06_tune.py")
 
 VALID_SEX = {"male", "female"}
 VALID_EMBARKED = {"S", "C", "Q"}
@@ -33,14 +28,16 @@ def predict_one(pclass=3, sex="male", age=30, sibsp=0, parch=0,
             f"embarked must be one of {VALID_EMBARKED}, got {embarked!r}")
     if pclass not in (1, 2, 3):
         raise ValueError(f"pclass must be 1/2/3, got {pclass!r}")
-    if not (0 <= age <= 100):
-        raise ValueError(f"age out of range: {age!r}")
+    if age is not None and not (0 <= age <= 100):
+        raise ValueError(f"age out of range: {age!r} (use None if unknown)")
     if sibsp < 0 or parch < 0 or fare < 0:
         raise ValueError("sibsp/parch/fare must be >= 0")
 
     raw = pd.DataFrame([{
-        "pclass": pclass, "sex": sex, "age": float(age), "sibsp": sibsp,
-        "parch": parch, "fare": float(fare), "embarked": embarked,
+        "pclass": pclass, "sex": sex,
+        "age": np.nan if age is None else float(age),
+        "sibsp": sibsp, "parch": parch, "fare": float(fare),
+        "embarked": embarked,
     }])[RAW]
     row = add_features(raw)[features]
     prob = float(model.predict_proba(row)[0, 1])
@@ -55,6 +52,8 @@ if __name__ == "__main__":
          "fare": 8.0, "embarked": "S"},
         {"pclass": 2, "sex": "female", "age": 8, "sibsp": 1, "parch": 1,
          "fare": 30, "embarked": "S"},
+        {"pclass": 3, "sex": "male", "age": None, "sibsp": 0, "parch": 0,
+         "fare": 8.0, "embarked": "S"},   # unknown age
     ]
     for ex in examples:
         pred, prob = predict_one(**ex)

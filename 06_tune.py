@@ -1,7 +1,8 @@
 """Step 6: tune LR / RF / HGB with GridSearchCV (ROC-AUC, stratified CV).
 
 Selection is by CV score only; the test set is touched once at the end.
-Saves the best model + sklearn version, and best_params.json for 09.
+Saves the best model + sklearn version, and best_params.json with the tuned
+params of EVERY model (09 uses all of them so the comparison is fair).
 """
 import json
 
@@ -55,19 +56,18 @@ cv = make_cv()
 best_cv = 0
 best_model = None
 best_name = ""
-best_params = {}
+all_params = {}
 
 for name, (clf, grid) in grids.items():
     pipe = Pipeline([("prep", make_preprocess()), ("clf", clf)])
     gs = GridSearchCV(pipe, grid, cv=cv, scoring="roc_auc", n_jobs=-1)
     gs.fit(X_train, y_train)
     print(f"{name}: best_params={gs.best_params_} | CV-AUC={gs.best_score_:.4f}")
+    all_params[name] = gs.best_params_
     if gs.best_score_ > best_cv:
         best_cv = gs.best_score_
         best_model = gs.best_estimator_
         best_name = name
-        best_params = {"model": name,
-                       "params": gs.best_params_}
 
 # test touched once, for reporting only
 test_pred = best_model.predict(X_test)
@@ -78,5 +78,5 @@ print(f"\nBest by CV: {best_name} | test_acc={accuracy_score(y_test, test_pred):
 joblib.dump({"model": best_model, "features": FEATURES,
              "sklearn_version": sklearn.__version__}, MODEL_PATH)
 with open(PARAMS_PATH, "w", encoding="utf-8") as f:
-    json.dump(best_params, f, indent=2)
+    json.dump({"selected": best_name, "params": all_params}, f, indent=2)
 print(f"saved {MODEL_PATH.name} (sklearn {sklearn.__version__}) + {PARAMS_PATH.name}")

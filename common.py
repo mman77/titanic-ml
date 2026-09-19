@@ -1,13 +1,15 @@
-"""Shared helpers for the Titanic pipeline (imported by 05-09).
+"""Shared helpers for the Titanic pipeline (imported by 02-09).
 
 Single source of truth for: paths, seed, feature engineering,
-preprocessing, CV splitters, and baselines. This fixes the
+preprocessing, CV splitters, baselines, and model loading. This fixes the
 train/serve skew and duplicated splits across scripts.
 """
 from pathlib import Path
 
+import joblib
 import numpy as np
 import pandas as pd
+import sklearn
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
@@ -27,6 +29,7 @@ DATA_RAW = BASE_DIR / "titanic.csv"
 DATA_CLEAN = BASE_DIR / "titanic_clean.csv"
 MODEL_PATH = BASE_DIR / "titanic_best_model.pkl"
 PARAMS_PATH = BASE_DIR / "best_params.json"
+METRICS_PATH = BASE_DIR / "metrics.txt"
 PLOTS_DIR = BASE_DIR / "plots"
 
 # Raw columns expected from titanic_clean.csv
@@ -96,10 +99,29 @@ def split(X, y):
     )
 
 
-class SexRuleClassifier(BaseEstimator, ClassifierMixin):
-    """Baseline: predict survived iff passenger is female. CV-compatible."""
+def load_model(path=MODEL_PATH):
+    """Load the model saved by 06_tune.py with a clear error / version warning."""
+    if not path.exists():
+        raise FileNotFoundError(
+            f"{path.name} not found - run 03_clean.py then 06_tune.py first")
+    saved = joblib.load(path)
+    saved_ver = saved.get("sklearn_version", "unknown")
+    if saved_ver != sklearn.__version__:
+        print(f"WARNING: model saved with sklearn {saved_ver}, "
+              f"running {sklearn.__version__} -> re-run 06_tune.py")
+    return saved
+
+
+class SexRuleClassifier(ClassifierMixin, BaseEstimator):
+    """Baseline: predict survived iff passenger is female.
+
+    ClassifierMixin must come BEFORE BaseEstimator (sklearn >= 1.6), and
+    classes_ must exist, otherwise is_classifier() is False and
+    scoring='roc_auc' fails inside cross_validate / GridSearchCV.
+    """
 
     def fit(self, X, y=None):
+        self.classes_ = np.array([0, 1])
         return self
 
     def predict(self, X):
