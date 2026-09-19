@@ -1,0 +1,7 @@
+Titanic advanced results
+features: ['pclass', 'sex', 'age', 'sibsp', 'parch', 'fare', 'embarked', 'alone', 'family_size', 'is_child', 'fare_per_person', 'fare_log', 'age_x_pclass', 'who', 'adult_male']
+LogisticRegression: test_acc=0.8380 | AUC=0.8590 | CV5=0.8182
+RandomForest: test_acc=0.8045 | AUC=0.8544 | CV5=0.8316
+HistGradientBoosting: test_acc=0.8045 | AUC=0.8356 | CV5=0.8115
+
+Best (by AUC): LogisticRegression AUC=0.8590
