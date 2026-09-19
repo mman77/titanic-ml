@@ -1,7 +1,11 @@
-Titanic advanced results (selection by CV on train only)
-features: ['pclass', 'sex', 'age', 'sibsp', 'parch', 'fare', 'embarked', 'alone', 'family_size', 'is_child', 'fare_per_person', 'fare_log', 'age_x_pclass', 'who', 'adult_male']
-LogisticRegression: CV5-train=0.8174
-RandomForest: CV5-train=0.8343
-HistGradientBoosting: CV5-train=0.8118
+Titanic final report (selection by repeated CV on train only)
+seed=42 test_size=0.2 cv=RepeatedStratifiedKFold(5x3) scoring=roc_auc
+sklearn=1.9.1 pandas=3.0.5
+features: ['pclass', 'sex', 'age', 'sibsp', 'parch', 'fare', 'embarked', 'family_size', 'alone', 'age_missing', 'is_child', 'fare_per_person', 'age_x_pclass']
+Dummy(most_frequent): test_acc=0.6145 | test_AUC=0.5000
+SexRule: test_acc=0.7765 | test_AUC=0.7534
+LogisticRegression: CV-AUC=0.8547 +/- 0.0243
+RandomForest: CV-AUC=0.8791 +/- 0.0264
+HistGradientBoosting: CV-AUC=0.8638 +/- 0.0351
 
-Best (by CV): RandomForest CV=0.8343 | test_acc=0.8101 | test_AUC=0.8495
+Winner: RandomForest CV-AUC=0.8791 | test_acc=0.7821 | test_AUC=0.8436

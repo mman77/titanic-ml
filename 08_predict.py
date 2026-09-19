@@ -1,34 +1,68 @@
-"""Step 8: تنبؤ لراكب جديد باستخدام الموديل المحفوظ."""
+"""Step 8: predict for a new passenger using the saved model.
+
+Engineered features are derived via common.add_features (same code as
+training -> no train/serve skew). `alone` is derived, not asked.
+Inputs are validated: invalid sex/embarked fail loudly instead of
+silently predicting garbage (handle_unknown='ignore' would zero them).
+"""
 import joblib
 import pandas as pd
+import sklearn
 
-saved = joblib.load("titanic_best_model.pkl")
+from common import MODEL_PATH, RAW, add_features
+
+saved = joblib.load(MODEL_PATH)
 model = saved["model"]
 features = saved["features"]
 
+saved_ver = saved.get("sklearn_version", "unknown")
+if saved_ver != sklearn.__version__:
+    print(f"WARNING: model saved with sklearn {saved_ver}, "
+          f"running {sklearn.__version__} -> re-run 06_tune.py")
+
+VALID_SEX = {"male", "female"}
+VALID_EMBARKED = {"S", "C", "Q"}
+
+
 def predict_one(pclass=3, sex="male", age=30, sibsp=0, parch=0,
-                fare=8.0, embarked="S", alone=True):
-    family_size = sibsp + parch + 1
-    is_child = int(age < 12)
-    row = pd.DataFrame([{
-        "pclass": pclass, "sex": sex, "age": age, "sibsp": sibsp,
-        "parch": parch, "fare": fare, "embarked": embarked,
-        "alone": alone, "family_size": family_size, "is_child": is_child,
-    }])[features]
-    prob = model.predict_proba(row)[0, 1]
-    pred = int(prob >= 0.5)
-    return pred, prob
+                fare=8.0, embarked="S"):
+    if sex not in VALID_SEX:
+        raise ValueError(f"sex must be one of {VALID_SEX}, got {sex!r}")
+    if embarked not in VALID_EMBARKED:
+        raise ValueError(
+            f"embarked must be one of {VALID_EMBARKED}, got {embarked!r}")
+    if pclass not in (1, 2, 3):
+        raise ValueError(f"pclass must be 1/2/3, got {pclass!r}")
+    if not (0 <= age <= 100):
+        raise ValueError(f"age out of range: {age!r}")
+    if sibsp < 0 or parch < 0 or fare < 0:
+        raise ValueError("sibsp/parch/fare must be >= 0")
+
+    raw = pd.DataFrame([{
+        "pclass": pclass, "sex": sex, "age": float(age), "sibsp": sibsp,
+        "parch": parch, "fare": float(fare), "embarked": embarked,
+    }])[RAW]
+    row = add_features(raw)[features]
+    prob = float(model.predict_proba(row)[0, 1])
+    return int(prob >= 0.5), prob
+
 
 if __name__ == "__main__":
     examples = [
         {"pclass": 1, "sex": "female", "age": 25, "sibsp": 0, "parch": 0,
-         "fare": 100, "embarked": "C", "alone": True},
+         "fare": 100, "embarked": "C"},
         {"pclass": 3, "sex": "male", "age": 30, "sibsp": 0, "parch": 0,
-         "fare": 8.0, "embarked": "S", "alone": True},
+         "fare": 8.0, "embarked": "S"},
         {"pclass": 2, "sex": "female", "age": 8, "sibsp": 1, "parch": 1,
-         "fare": 30, "embarked": "S", "alone": False},
+         "fare": 30, "embarked": "S"},
     ]
     for ex in examples:
         pred, prob = predict_one(**ex)
-        status = "ناجي" if pred == 1 else "غير ناجي"
+        status = "survived" if pred == 1 else "died"
         print(f"{ex} -> {status} (prob={prob:.2f})")
+
+    # validation demo (must raise, not silently mispredict)
+    try:
+        predict_one(sex="Male")
+    except ValueError as e:
+        print("validation OK:", e)

@@ -1,18 +1,28 @@
+"""Step 3: structural cleaning only (no value imputation here).
+
+Missing-value imputation lives inside the model Pipelines (SimpleImputer)
+so medians/modes are learned from train folds only. This file only drops
+columns that are unusable, redundant, or leaky:
+- deck: mostly missing (percentage computed below, not hardcoded)
+- alive/class: post-outcome or duplicate labels (alive mirrors survived)
+- embark_town/who/adult_male: duplicates of embarked/sex/age
+"""
 import pandas as pd
 
-df = pd.read_csv("titanic.csv")
-print("قبل التنظيف:")
-print(df.isnull().sum())
+from common import DATA_CLEAN, DATA_RAW
 
-# 1. حذف عمود deck لانه 77% ناقص (تنظيف هيكلي فقط)
-df = df.drop(columns=["deck"])
+df = pd.read_csv(DATA_RAW)
+print("before cleaning:")
+print(df.isnull().sum().to_string())
 
-# ملحوظة منهجية: ملء القيم الناقصة (age / embarked) اتنقل جوه الـ Pipeline
-# في سكريبتات التدريب (SimpleImputer) عشان الـ median/mode يتحسب من الـ train
-# بس، وميحصلش تسريب من الـ test. هنا بنسيب الـ NaN زي ما هي عمداً.
+deck_missing = df["deck"].isnull().mean()
+print(f"\ndeck missing: {deck_missing:.1%} -> dropping column")
 
-print("\nبعد التنظيف الهيكلي (الـ NaN الباقي مقصود وبيتعالج في الـ Pipeline):")
-print(df.isnull().sum())
+df = df.drop(columns=["deck", "alive", "class",
+                      "embark_town", "who", "adult_male"])
 
-df.to_csv("titanic_clean.csv", index=False)
-print("\nاتحفظ في titanic_clean.csv shape:", df.shape)
+print("\nafter structural cleaning (remaining NaN is intentional):")
+print(df.isnull().sum().to_string())
+
+df.to_csv(DATA_CLEAN, index=False)
+print("\nsaved to titanic_clean.csv shape:", df.shape)

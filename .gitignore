@@ -3,4 +3,9 @@ __pycache__/
 .venv/
 venv/
 *.log
-opencode-serve*
+.ipynb_checkpoints/
+
+# generated artifacts (regenerate with 03_clean.py / 06_tune.py)
+*.pkl
+titanic_clean.csv
+submission.csv

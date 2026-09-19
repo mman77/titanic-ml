@@ -1,9 +1,15 @@
-# Titanic ML
+# Titanic ML (seaborn sample) + Kaggle-ready notebook
 
-Pipeline كامل من الداتا الخام للموديل المحفوظ.
+Goal: predict survival (binary classification) with an honest methodology:
+selection by cross-validation on train only, test touched once.
 
-## التشغيل (استخدم py -3.12 عندك)
+Data: `titanic.csv` is the seaborn sample (891 rows). The Kaggle competition
+files (`train.csv` / `test.csv` with Name/Ticket/Cabin) are used only inside
+`titanic.ipynb`, which also extracts `Title`/`Deck` when they exist.
+
+## Run (Windows: `py -3.12 ...`, elsewhere: `python ...`)
 ```
+pip install -r requirements.txt
 py -3.12 01_download_data.py
 py -3.12 02_explore.py
 py -3.12 03_clean.py
@@ -14,27 +20,28 @@ py -3.12 07_evaluate.py
 py -3.12 08_predict.py
 py -3.12 09_advanced.py
 ```
+`titanic_clean.csv`, `titanic_best_model.pkl`, `plots/` are regenerated
+by the scripts above (not stored in git).
 
-## النتائج الحالية (الاختيار بالـ CV على الـ train فقط — الـ test للتقارير)
-- Baseline (05): LR test 82.1% / CV 80.6% | RF test 81.6% / CV 81.3%
-- Tuned (06): RF أحسن بالـ CV (0.8146) | test 81.0%
-- Advanced (09, features جديدة): RF أحسن بالـ CV (0.8343) | test 81.0% | AUC 0.8495
-- ملحوظة: الـ test فيه 179 راكب بس (±5.6%)، ففروق 1-2% بين الموديلات noise
-- الموديل المحفوظ: `titanic_best_model.pkl` + `titanic_advanced_model.pkl`
-- المقاييس: `metrics.txt`
-- الرسومات: `plots/` (confusion_matrix, roc_curve, survival_rates)
+## Results (selection by repeated CV-AUC on train; test n=179, ~±5.6%)
+- Dummy (majority): test 61.5%
+- SexRule (female -> survived): test 77.7%
+- LogisticRegression: CV-AUC 0.855 ± 0.024
+- RandomForest (tuned): CV-AUC 0.879 ± 0.026 -> test 78.2% / AUC 0.844
+- HistGradientBoosting (tuned): CV-AUC 0.864 ± 0.035
+- Full table: `metrics.txt`
 
-## ملاحظات منهجية
-- الـ imputation جوه الـ Pipeline (بيتعلم من الـ train بس)
-- الـ CV بـ StratifiedKFold وشغال على الـ train فقط
+## Files
+- `common.py` shared seed/paths/features/preprocess/CV/baselines
+- `01..04` download / explore / structural clean / analysis (+ 1 plot)
+- `05` baselines + models + permutation importance
+- `06` GridSearchCV (ROC-AUC) -> model + `best_params.json`
+- `07` confusion matrix + ROC + error analysis
+- `08` validated single-passenger prediction
+- `09` repeated-CV final report -> `metrics.txt`
+- `titanic.ipynb` same methodology, Kaggle-ready (writes `submission.csv`)
 
-## الملفات
-- `01_download_data.py` تحميل الداتا
-- `02_explore.py` استكشاف سريع
-- `03_clean.py` تنظيف -> `titanic_clean.csv`
-- `04_analyze.py` تحليل groupby
-- `05_train.py` baseline (LR + RF)
-- `06_tune.py` GridSearch + حفظ أحسن موديل
-- `07_evaluate.py` تقييم + رسومات
-- `08_predict.py` تنبؤ لراكب جديد
-- `09_advanced.py` features جديدة (fare_per_person, fare_log, age_x_pclass, who) + مقارنة + metrics.txt
+## Limitations
+- n=891 / test=179: 1-2% gaps between models are noise, not signal
+- RF overfits train (~98% vs ~78% test); CV is the honest number
+- Seaborn sample has no Name/Ticket/Cabin (no Title feature locally)
