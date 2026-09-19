@@ -1,6 +1,7 @@
 import pandas as pd
-from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.model_selection import train_test_split, cross_val_score, StratifiedKFold
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.impute import SimpleImputer
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.linear_model import LogisticRegression
@@ -29,14 +30,27 @@ X_train, X_test, y_train, y_test = train_test_split(
 )
 print("train:", X_train.shape, "test:", X_test.shape)
 
-# 4. تجهيز الأعمدة: رقمية scale + فئوية one-hot
+# 4. تجهيز الأعمدة جوه الـ Pipeline (عشان مفيش تسريب من الـ test):
+# رقمية: median imputation (بيتعلم من الـ train بس) + scale
+# فئوية: most_frequent imputation + one-hot
 num_cols = ["age", "sibsp", "parch", "fare", "family_size", "is_child", "pclass"]
 cat_cols = ["sex", "embarked", "alone"]
 
-preprocess = ColumnTransformer([
-    ("num", StandardScaler(), num_cols),
-    ("cat", OneHotEncoder(handle_unknown="ignore"), cat_cols),
+num_pipe = Pipeline([
+    ("impute", SimpleImputer(strategy="median")),
+    ("scale", StandardScaler()),
 ])
+cat_pipe = Pipeline([
+    ("impute", SimpleImputer(strategy="most_frequent")),
+    ("encode", OneHotEncoder(handle_unknown="ignore")),
+])
+
+preprocess = ColumnTransformer([
+    ("num", num_pipe, num_cols),
+    ("cat", cat_pipe, cat_cols),
+])
+
+strat_cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
 
 models = {
     "LogisticRegression": LogisticRegression(max_iter=1000),
@@ -48,7 +62,7 @@ for name, model in models.items():
     pipe.fit(X_train, y_train)
     pred = pipe.predict(X_test)
     acc = accuracy_score(y_test, pred)
-    cv = cross_val_score(pipe, X, y, cv=5).mean()
+    cv = cross_val_score(pipe, X, y, cv=strat_cv).mean()
     print(f"\n===== {name} =====")
     print(f"test accuracy: {acc:.4f} | CV-5 mean: {cv:.4f}")
     print(confusion_matrix(y_test, pred))

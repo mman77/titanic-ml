@@ -4,21 +4,14 @@ df = pd.read_csv("titanic.csv")
 print("قبل التنظيف:")
 print(df.isnull().sum())
 
-# 1. حذف عمود deck لانه 77% ناقص
+# 1. حذف عمود deck لانه 77% ناقص (تنظيف هيكلي فقط)
 df = df.drop(columns=["deck"])
 
-# 2. ملء السن بال median حسب الجنس والدرجة
-df["age"] = df.groupby(["sex", "pclass"])["age"].transform(
-    lambda x: x.fillna(x.median())
-)
-# لو لسه فيه ناقص املاه بال median العام
-df["age"] = df["age"].fillna(df["age"].median())
+# ملحوظة منهجية: ملء القيم الناقصة (age / embarked) اتنقل جوه الـ Pipeline
+# في سكريبتات التدريب (SimpleImputer) عشان الـ median/mode يتحسب من الـ train
+# بس، وميحصلش تسريب من الـ test. هنا بنسيب الـ NaN زي ما هي عمداً.
 
-# 3. ملء embarked بال mode (هما صفين بس)
-df["embarked"] = df["embarked"].fillna(df["embarked"].mode()[0])
-df["embark_town"] = df["embark_town"].fillna(df["embark_town"].mode()[0])
-
-print("\nبعد التنظيف:")
+print("\nبعد التنظيف الهيكلي (الـ NaN الباقي مقصود وبيتعالج في الـ Pipeline):")
 print(df.isnull().sum())
 
 df.to_csv("titanic_clean.csv", index=False)

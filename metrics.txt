@@ -1,7 +1,7 @@
-Titanic advanced results
+Titanic advanced results (selection by CV on train only)
 features: ['pclass', 'sex', 'age', 'sibsp', 'parch', 'fare', 'embarked', 'alone', 'family_size', 'is_child', 'fare_per_person', 'fare_log', 'age_x_pclass', 'who', 'adult_male']
-LogisticRegression: test_acc=0.8380 | AUC=0.8590 | CV5=0.8182
-RandomForest: test_acc=0.8045 | AUC=0.8544 | CV5=0.8316
-HistGradientBoosting: test_acc=0.8045 | AUC=0.8356 | CV5=0.8115
+LogisticRegression: CV5-train=0.8174
+RandomForest: CV5-train=0.8343
+HistGradientBoosting: CV5-train=0.8118
 
-Best (by AUC): LogisticRegression AUC=0.8590
+Best (by CV): RandomForest CV=0.8343 | test_acc=0.8101 | test_AUC=0.8495

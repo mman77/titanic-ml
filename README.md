@@ -15,14 +15,18 @@ py -3.12 08_predict.py
 py -3.12 09_advanced.py
 ```
 
-## النتائج الحالية
-- Baseline (05): LR ~82.7% / RF ~81%
-- Tuned (06): LR ~82.1% (C=0.1) / RF ~81.6% (300 tree, depth=8)
-- Advanced (09, features جديدة): LR **~83.8%** AUC 0.859 | CV 81.8%
-- ROC-AUC: ~0.858
+## النتائج الحالية (الاختيار بالـ CV على الـ train فقط — الـ test للتقارير)
+- Baseline (05): LR test 82.1% / CV 80.6% | RF test 81.6% / CV 81.3%
+- Tuned (06): RF أحسن بالـ CV (0.8146) | test 81.0%
+- Advanced (09, features جديدة): RF أحسن بالـ CV (0.8343) | test 81.0% | AUC 0.8495
+- ملحوظة: الـ test فيه 179 راكب بس (±5.6%)، ففروق 1-2% بين الموديلات noise
 - الموديل المحفوظ: `titanic_best_model.pkl` + `titanic_advanced_model.pkl`
 - المقاييس: `metrics.txt`
 - الرسومات: `plots/` (confusion_matrix, roc_curve, survival_rates)
+
+## ملاحظات منهجية
+- الـ imputation جوه الـ Pipeline (بيتعلم من الـ train بس)
+- الـ CV بـ StratifiedKFold وشغال على الـ train فقط
 
 ## الملفات
 - `01_download_data.py` تحميل الداتا
